@@ -1,18 +1,15 @@
 package gabrimatic.info.restart
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-/**
+/** 
  * `RestartPlugin` class provides a method to restart a Flutter application in Android.
  *
  * It uses the Flutter platform channels to communicate with the Flutter code.
@@ -20,15 +17,14 @@ import io.flutter.plugin.common.MethodChannel.Result
  *
  * The main functionality is provided by the `onMethodCall` method.
  */
-class RestartPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
+class RestartPlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var context: Context
     private lateinit var channel: MethodChannel
-    private var activity: Activity? = null
 
-    /**
+    /** 
      * Called when the plugin is attached to the Flutter engine.
      *
-     * It initializes the `context` with the application context and
+     * It initializes the `context` with the application context and 
      * sets this plugin instance as the handler for method calls from Flutter.
      */
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -37,7 +33,7 @@ class RestartPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel.setMethodCallHandler(this)
     }
 
-    /**
+    /** 
      * Handles method calls from the Flutter code.
      *
      * If the method call is 'restartApp', it restarts the app and sends a successful result.
@@ -52,7 +48,7 @@ class RestartPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    /**
+    /** 
      * Called when the plugin is detached from the Flutter engine.
      *
      * It removes the handler for method calls from Flutter.
@@ -61,32 +57,21 @@ class RestartPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel.setMethodCallHandler(null)
     }
 
-    /**
+    /** 
      * Restarts the application.
+     *
+     * It starts a new activity with a restart task for the launch intent of the application, 
+     * and then exits the running application.
      */
     private fun restartApp() {
-        activity?.let { currentActivity ->
-            val intent =
-                currentActivity.packageManager.getLaunchIntentForPackage(currentActivity.packageName)
-            intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            currentActivity.startActivity(intent)
-            currentActivity.finishAffinity()
-        }
+        context.startActivity(
+            Intent.makeRestartActivityTask(
+                (context.packageManager.getLaunchIntentForPackage(
+                    context.packageName
+                ))!!.component
+            )
+        )
+        Runtime.getRuntime().exit(0)
     }
 
-    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activity = binding.activity
-    }
-
-    override fun onDetachedFromActivityForConfigChanges() {
-        activity = null
-    }
-
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        activity = binding.activity
-    }
-
-    override fun onDetachedFromActivity() {
-        activity = null
-    }
 }
